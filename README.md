@@ -1,6 +1,6 @@
 # Coin Hunter - JavaFX Platformer Game
 
-Dungeon Dweller is a simple 2D platformer game developed using JavaFX. The game features a player character navigating through levels filled with platforms, coins, lava, and enemies, aiming to reach the end while collecting points.
+ Coin Hunter is a simple 2D platformer game developed using JavaFX. The game features a player character navigating through levels filled with platforms, coins, lava, and enemies, aiming to reach the end while collecting points.
 
 ---
 
