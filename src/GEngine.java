@@ -1,5 +1,4 @@
 import javafx.animation.AnimationTimer;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -33,6 +32,7 @@ public class GEngine {
     static boolean CanJump = true;
     static boolean isDead = false;
     static boolean completeLvl = false;
+    static int score = 0;
 
     static int levelWidth;
     static int count = 0;
@@ -48,16 +48,16 @@ public class GEngine {
 
     static HashMap<KeyCode, Boolean> keys = new HashMap<>();
 
-    static Image alien = new Image("MainChar.png");
+    static Image alien = new Image("res/MainChar.png");
     //static Image bullets = new Image("download.png");
-    static Image wall = new Image("Brick_Block.png");
-    static Image Coin = new Image("Coin.png");
-    static Image cave = new Image("Cave.png");
-    static Image lava = new Image("Lava.png");
-    static Image lavaenemy = new Image("Lava_Enemy.png");
+    static Image wall = new Image("res/Brick_Block.png");
+    static Image Coin = new Image("res/Coin.png");
+    static Image cave = new Image("res/Cave.png");
+    static Image lava = new Image("res/Lava.png");
+    static Image lavaenemy = new Image("res/Lava_Enemy.png");
 
-    static Pane gameRoot = new Pane();
-    static Pane MainRoot = new Pane();
+    //static Pane gameRoot = new Pane();
+    //static Pane MainRoot = new Pane();
     static StackPane pane;
 
     static Node coin;
@@ -66,97 +66,32 @@ public class GEngine {
 
 
     // method used to create and add objects to root
-    private static Node createObject(int x, int y, ImagePattern imagePattern) {
+    static Node createObject(int x, int y, ImagePattern imagePattern, Pane Gameroot) {
         Rectangle Sprite = new Rectangle(60, 60);
         Sprite.setTranslateX(x);
         Sprite.setTranslateY(y);
         Sprite.setFill(imagePattern);
 
         // adds created object to root
-        gameRoot.getChildren().add(Sprite);
+        Gameroot.getChildren().add(Sprite);
         return Sprite;
     }
 
 
-    //Initializes the game
-    public static void Init() {
-        //background
-        backg = new Rectangle(1500, 720);
-        backg.setFill(Color.BLUE);
-
-        //level size
-        levelWidth = AllData.Level2[0].length() * 60;
-
-        for (int i = 0; i < AllData.Level2.length; i++) {
-            String line = AllData.Level2[i];
-            for (int j = 0; j < line.length(); j++) {
-                switch (line.charAt(j)) {
-                    case '0':
-                        // returns nothing at each occurrence of 0
-                        break;
-                    case '1':
-                        // adds platform at each occurrence of the number 1 in the level data
-                        Node Platform = createObject(j * 60, i * 60, new ImagePattern(wall));
-                        Platforms.add(Platform);
-                        break;
-                    case '5':
-                        // returns a 'coin' at each occurrence of 5
-                        coin = createObject(j * 60, i * 60, new ImagePattern(Coin));
-                        Coins.add(coin);
-                        break;
-                    case '2':
-                        //returns an object which removes player and switches the scenes when it intersects with player
-                        End = createObject(j * 60, i * 60, new ImagePattern(cave));
-                        Home.add(End);
-                        break;
-                    case '6':
-                        Node Lava = createObject(j * 60, i * 60, new ImagePattern(lava));
-                        LAVA.add(Lava);
-                        break;
-                    //this was used in development to reach the end quickly to test features
-                    case '8':
-
-                        @SuppressWarnings("unused")
-                        Node HiddenPass = createObject(j * 60, i * 60, new ImagePattern(wall));
-
-                        break;
-
-                    case '3':
-                        Node Enemy = createObject(j * 60, i * 60, new ImagePattern(lavaenemy));
-                        Enemies.add(Enemy);
-                }
-            }
-        }
-        // creates player
-        Player = createObject(60, 40, new ImagePattern(alien));
-        // adds a listener that tracks player x location and move the root's x location accordingly
-        Player.translateXProperty().addListener((observable, oldValue, newValue) -> {
-            int offset = newValue.intValue();
-
-            if (offset > 400 && offset < levelWidth - 400) {
-                gameRoot.setLayoutX(-(offset - 400));
-            }
-        });
-
-        // adds the background and gameRoot which contains all the other assets
-        MainRoot.getChildren().addAll(backg, gameRoot);
-    }
-
-
     // tracks user input and applies method necessary to the key pressed
-    public static void update() {
-        if (processKeyPress(KeyCode.UP) | processKeyPress(KeyCode.W) && Player.getTranslateY() >= 6) {
+    public static void update(Pane GameRoot) {
+        if (processKeyPress(KeyCode.UP) || processKeyPress(KeyCode.W) && Player.getTranslateY() >= 6) {
             PlayerJump();
         }
-        if (processKeyPress(KeyCode.LEFT) | processKeyPress(KeyCode.A) && Player.getTranslateX() >= 5) {
-            movePlayerX(-5);
+        if (processKeyPress(KeyCode.LEFT) || processKeyPress(KeyCode.A) && Player.getTranslateX() >= 5) {
+            movePlayerX(-5,GameRoot);
         }
-        if (processKeyPress(KeyCode.RIGHT) | processKeyPress(KeyCode.D) && Player.getTranslateX() + 40 <= levelWidth - 5) {
-            movePlayerX(5);
+        if (processKeyPress(KeyCode.RIGHT) || processKeyPress(KeyCode.D) && Player.getTranslateX() + 40 <= levelWidth - 5) {
+            movePlayerX(5,GameRoot);
         }
         //added to speed through
         if (processKeyPress(KeyCode.SPACE) && Player.getTranslateX() + 40 <= levelWidth - 5) {
-            movePlayerX(50);
+            movePlayerX(50,GameRoot);
         }
 
         if (Velocity.getY() < 10) {
@@ -166,7 +101,7 @@ public class GEngine {
 
     }
 
-    public static void movePlayerX(int Val) {
+    public static void movePlayerX(int Val,Pane GameRoot) {
         boolean movingOnX = Val > 0;
         for (int i = 0; i < Math.abs(Val); i++) {
             for (Node Platform : Platforms) {
@@ -185,14 +120,14 @@ public class GEngine {
             for (Node Lava : LAVA) {
                 if (Player.getBoundsInParent().intersects(Lava.getBoundsInParent())) {
                     isDead = true;
-                    gameRoot.getChildren().remove(Player);
+                    GameRoot.getChildren().remove(Player);
                 }
 
             }
             for (Node Enemy : Enemies) {
                 if (Player.getBoundsInParent().intersects(Enemy.getBoundsInParent())) {
                     isDead = true;
-                    gameRoot.getChildren().remove(Player);
+                    GameRoot.getChildren().remove(Player);
                 }
             }
             for (Node End : Home) {
@@ -200,18 +135,33 @@ public class GEngine {
                     completeLvl = true;
                 }
             }
-            for (Node coin : Coins) {
+            for (int j = 0; j < Coins.size(); j++) {
+                Node coin = Coins.get(j);
                 if (coin.getBoundsInParent().intersects(Player.getBoundsInParent())) {
-                    gameRoot.getChildren().remove(coin);
-                    System.out.println(Coins.size());
-                    countTextt.setText("Points: " + count);
-
+                    updateScore(GameRoot, coin);
+                    j--; // Adjust index since the coin list shrinks after removal
                 }
             }
+
             Player.setTranslateX(Player.getTranslateX() + (movingOnX ? 1 : -1));
         }
 
     }
+    static int initialCoinCount = getCoins().size();
+    private static void updateScore(Pane GameRoot, Node coin) {
+        int scorePerCoin = 10; // Adjust as needed
+
+        // Remove the collected coin from the game
+        GameRoot.getChildren().remove(coin);
+        Coins.remove(coin);
+
+        // Increment the score
+        count += scorePerCoin;
+
+        // Update the score display
+        countTextt.setText("Points: " + count);
+    }
+
 
     public static void movePlayerY(int Val) {
         boolean movingDown = Val > 0;
@@ -242,12 +192,32 @@ public class GEngine {
             CanJump = false;
         }
     }
+    public static void reset() {
+        // Clear all state
+        Velocity = new Point2D(0, 0);
+        CanJump = true;
+        isDead = false;
+        completeLvl = false;
+        count = 0;
+
+        // Clear previous data
+        Platforms.clear();
+        Coins.clear();
+        Home.clear();
+        LAVA.clear();
+        Enemies.clear();
+        keys.clear();
+
+    }
 
     public static boolean processKeyPress(KeyCode key) {
         return keys.getOrDefault(key, false);
     }
 
     public static Scene StartScreen(Stage primaryStage) {
+
+        // Menu bar
+
 
         Menu Help = new Menu("Help");
         MenuItem Keyss = new MenuItem("Keyboard Bindings");
@@ -269,7 +239,6 @@ public class GEngine {
             }
         });
         Help.getItems().add(Keyss);
-
         Help.getItems().add(Credits);
 
         MenuBar Menub = new MenuBar();
@@ -293,7 +262,7 @@ public class GEngine {
         StackPane.setAlignment(Startbutton, Pos.BOTTOM_CENTER);
         StackPane.setAlignment(Wel, Pos.CENTER);
         StackPane.setAlignment(Menub, Pos.TOP_CENTER);
-        return new Scene(pane, 400, 400);
+        return new Scene(pane, 400, 500);
 
     }
 
@@ -329,25 +298,33 @@ public class GEngine {
     }
 
     public static Scene GameLevel1(Stage primaryStage) {
-        Init();
+        reset();
+        Pane GameRoot = new Pane();
+        Pane MainRoot2 = new Pane();
+        Initialize.Init(MainRoot2, GameRoot);
+
+
         countTextt = new Text("POINTS: 0");
         Text Playern = new Text("Player");
+
         TilePane pane = new TilePane(countTextt);
         TilePane Namepane = new TilePane(Playern);
         pane.setAlignment(Pos.TOP_RIGHT);
         Namepane.setAlignment(Pos.TOP_LEFT);
-        MainRoot.getChildren().addAll(pane, Namepane);
-        Scene Scene = new Scene(MainRoot, 1000, 400);
+
+        MainRoot2.getChildren().addAll(pane, Namepane);
+        Scene Scene = new Scene(MainRoot2, 1000, 400);
         Scene.setOnKeyPressed(event -> keys.put(event.getCode(), true));
         Scene.setOnKeyReleased(event -> keys.put(event.getCode(), false));
         AnimationTimer timer = new AnimationTimer() {
 
             @Override
             public void handle(long now) {
-                update();
+                update(GameRoot);
                 if (completeLvl) {
                     try {
-                        primaryStage.setScene(Congrats(primaryStage));
+                        //primaryStage.setScene(Congrats(primaryStage));
+                        primaryStage.setScene(StartScreen(primaryStage));
                         completeLvl = false;
                     } catch (Exception e) {
                         // TODO Auto-generated catch block
@@ -434,42 +411,89 @@ public class GEngine {
 
     }
 
-    @SuppressWarnings("unused")
-
-    public static class TableData {
-        SimpleStringProperty Keys;
-        SimpleStringProperty Action;
-        SimpleStringProperty Key2;
-
-        TableData(String Keys, String Key2, String Action) {
-            this.Keys = new SimpleStringProperty(Keys);
-            this.Action = new SimpleStringProperty(Action);
-            this.Key2 = new SimpleStringProperty(Key2);
-        }
-
-        public String getKey2() {
-            return Key2.get();
-        }
-
-        public void setKey2(String key2) {
-            Key2.set(key2);
-        }
-
-        public String getKeys() {
-            return Keys.get();
-        }
-
-        public void setKeys(String key) {
-            Keys.set(key);
-        }
-
-        public String getAction() {
-            return Action.get();
-        }
-
-        public void setAction(String action) {
-            Action.set(action);
-        }
+    public static ArrayList<Node> getCoins() {
+        return Coins;
     }
+
+    public static Node getEnd() {
+        return End;
+    }
+
+    public static Image getAlien() {
+        return alien;
+    }
+
+    public static Image getWall() {
+        return wall;
+    }
+
+    public static Rectangle getBackg() {
+        return backg;
+    }
+
+    public static int getLevelWidth() {
+        return levelWidth;
+    }
+
+    public static Image getLava() {
+        return lava;
+    }
+
+    public static Node getCoin() {
+        return coin;
+    }
+
+    public static ArrayList<Node> getLAVA() {
+        return LAVA;
+    }
+
+    public static Image getLavaenemy() {
+        return lavaenemy;
+    }
+
+    public static ArrayList<Node> getEnemies() {
+        return Enemies;
+    }
+
+    public static Image getCave() {
+        return cave;
+    }
+
+    public static ArrayList<Node> getHome() {
+        return Home;
+    }
+
+    public static Node getPlayer() {
+        return Player;
+    }
+
+    public static ArrayList<Node> getPlatforms() {
+        return Platforms;
+    }
+
+    public static Image getCoinImage() {
+        return Coin;
+    }
+
+    public static void setEnd(Node end) {
+        End = end;
+    }
+
+    public static void setPlayer(Node player) {
+        Player = player;
+    }
+
+    public static void setBackg(Rectangle backg) {
+        GEngine.backg = backg;
+    }
+
+    public static void setLevelWidth(int levelWidth) {
+        GEngine.levelWidth = levelWidth;
+    }
+
+    public static void setCoin(Node coin) {
+        GEngine.coin = coin;
+    }
+
 
 }

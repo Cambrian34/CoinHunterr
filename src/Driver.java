@@ -16,12 +16,5 @@ public class Driver extends Application {
         primaryStage.show();
 
     }
-    /*
-     * public static void Shoot() { Node Bullet =
-     * createObject((int)Player.getTranslateX()+20, (int) Player.getTranslateY(),
-     * 20, 5, new ImagePattern(bullets)); gameRoot.getChildren().add(Bullet);
-     *
-     * }
-     */
 
 }
